@@ -14,6 +14,7 @@ var connectionsString =  builder.Configuration.GetConnectionString("DefaultConne
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
                                 options.UseSqlServer(connectionsString));
 
+builder.Services.AddCors();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -24,6 +25,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors(x=> x.AllowAnyOrigin()
+                 .AllowAnyHeader()
+                 .AllowAnyMethod());
 
 app.UseAuthorization();
 
