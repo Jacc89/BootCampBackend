@@ -32,7 +32,21 @@ namespace API.Controllers
         [HttpGet("{id}", Name = "GetEmpleado")]
         public async Task<ActionResult<IEnumerable<Empleado>>> GetEmpleado(int id)
         {
+            if (id ==  0)
+            {
+                _response.Mensaje ="Debe de enviar el Id del Empleado";
+                _response.IsExitoso = false;
+                return BadRequest(_response);                
+            }
             var Empl = await _db.TbEmpleado.FindAsync(id);
+
+             if (Empl == null)
+            {
+                _response.Mensaje ="Empleado no existe!";
+                _response.IsExitoso = false;
+                return BadRequest(_response);   
+                
+            }
             _response.Resultado =  Empl;
             _response.Mensaje = "Datos de empleado";
             return Ok(_response);

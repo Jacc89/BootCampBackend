@@ -29,7 +29,21 @@ namespace API.Controllers
         [HttpGet("{id}", Name = "GetProducto")]
         public async Task<ActionResult<IEnumerable<Producto>>> GetProducto(int id)
         {
+            if (id ==  0)
+            {
+                _response.Mensaje ="Debe de enviar el Id del Producto";
+                _response.IsExitoso = false;
+                return BadRequest(_response);                
+            }
+
             var Prod = await _db.TbProducto.FindAsync(id);
+            if (Prod == null)
+            {
+                _response.Mensaje ="Producto no existe!";
+                _response.IsExitoso = false;
+                return BadRequest(_response);   
+                
+            }
              _response.Resultado =  Prod;
             _response.Mensaje = "Datos del producto";
             return Ok(_response);

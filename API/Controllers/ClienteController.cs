@@ -1,3 +1,4 @@
+using System.Net;
 using Core.Dto;
 using Core.Models;
 using Infraestructura.Data;
@@ -22,6 +23,8 @@ namespace API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Cliente>>> GetClientes()
         {
+
+            
             var listas = await _db.TbCliente.ToListAsync();
             _response.Resultado =  listas;
             _response.Mensaje = " lista de clientes";
@@ -30,7 +33,22 @@ namespace API.Controllers
         [HttpGet("{id}", Name = "GetCliente")]
         public async Task<ActionResult<IEnumerable<Cliente>>> GetCliente(int id)
         {
+            if (id ==  0)
+            {
+                _response.Mensaje ="Debe de enviar el Id del Cliente";
+                _response.IsExitoso = false;
+                return BadRequest(_response);                
+            }
+
             var Clie = await _db.TbCliente.FindAsync(id);
+            if (Clie == null)
+            {
+                _response.Mensaje ="Cliente no existe!";
+                _response.IsExitoso = false;
+                return BadRequest(_response);   
+                
+            }
+
             _response.Resultado =  Clie;
             _response.Mensaje = " Datos de cliente" + Clie.Id;
             return Ok(_response);

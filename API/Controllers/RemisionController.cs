@@ -30,7 +30,20 @@ namespace API.Controllers
         [HttpGet("{id}", Name = "GetRemision")]
         public async Task<ActionResult<IEnumerable<Remision>>> GetRemision(int id)
         {
+            if (id ==  0)
+            {
+                _response.Mensaje ="Debe de enviar el Id del Remision";
+                _response.IsExitoso = false;
+                return BadRequest(_response);                
+            }
             var Remi = await _db.TbRemision.FindAsync(id);
+            if (Remi == null)
+            {
+                _response.Mensaje ="Remision no existe!";
+                _response.IsExitoso = false;
+                return BadRequest(_response);   
+                
+            }
             _response.Resultado =  Remi;
             _response.Mensaje = "Datos de remisiones";
             return Ok(_response); // status 200
