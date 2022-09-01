@@ -97,9 +97,9 @@ namespace API.Controllers
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IEnumerable<Cliente>>> PutCliente(int id, [FromBody] Cliente cliente)
+        public async Task<ActionResult<IEnumerable<Cliente>>> PutCliente(int id, [FromBody] ClienteDto clienteDto)
         {
-            if(id != cliente.Id){
+            if(id != clienteDto.Id){
                 return BadRequest("Id de Cliente no  coincide");
             }
             if (!ModelState.IsValid)
@@ -107,12 +107,13 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
             var ClieExiste = await _db.TbCliente.FirstOrDefaultAsync
-                                                ( c => c.Nombre.ToLower() == cliente.Nombre.ToLower() && c.Id!= cliente.Id);
+                                                ( c => c.Nombre.ToLower() == clienteDto.Nombre.ToLower() && c.Id!= clienteDto.Id);
             if (ClieExiste != null)
             {
                 ModelState.AddModelError("NombreDuplicado", "Nombre del cliente ya existe"); // model state personaliazado
                 return BadRequest(ModelState);
             }
+            Cliente cliente = _mapper.Map<Cliente>(clienteDto);
             _db.Update(cliente);
             await _db.SaveChangesAsync();
             return Ok(cliente);

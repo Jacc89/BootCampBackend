@@ -90,9 +90,9 @@ namespace API.Controllers
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IEnumerable<Remision>>> PutRemision(int id, [FromBody] Remision remision)
+        public async Task<ActionResult<IEnumerable<Remision>>> PutRemision(int id, [FromBody] RemisionDto remisionDto)
         {
-            if(id != remision.Id){
+            if(id != remisionDto.Id){
                 return BadRequest("Id de Remision no  coincide");
             }
 
@@ -102,12 +102,13 @@ namespace API.Controllers
             }
 
             var remiExiste = await _db.TbRemision.FirstOrDefaultAsync
-                                                ( r => r.NumRemision == remision.NumRemision && r.Id!= remision.Id);
+                                                ( r => r.NumRemision == remisionDto.NumRemision && r.Id!= remisionDto.Id);
             if (remiExiste != null)
             {
                 ModelState.AddModelError("RemisionDuplicado", "Numero de remision ya existe"); // model state personaliazado
                 return BadRequest(ModelState);
             }
+            Remision remision = _mapper.Map<Remision>(remisionDto);
             _db.Update(remision);
             await _db.SaveChangesAsync();
             return Ok(remision);

@@ -90,9 +90,9 @@ namespace API.Controllers
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IEnumerable<Empleado>>> PutEmpleado(int id, [FromBody] Empleado empleado)
+        public async Task<ActionResult<IEnumerable<Empleado>>> PutEmpleado(int id, [FromBody] EmpleadoDto empleadoDto)
         {
-            if(id != empleado.Id){
+            if(id != empleadoDto.Id){
                 return BadRequest("Id de empleado no  coincide");
             }
             if (!ModelState.IsValid)
@@ -100,13 +100,14 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
             var empleExiste = await _db.TbEmpleado.FirstOrDefaultAsync
-                                                ( e =>e.Nombres.ToLower() == empleado.Nombres.ToLower() 
-                                                && e.Id == empleado.Id);
+                                                ( e =>e.Nombres.ToLower() == empleadoDto.Nombres.ToLower() 
+                                                && e.Id == empleadoDto.Id);
             if (empleExiste != null)
             {
                 ModelState.AddModelError("cedulaDuplicado", "Numero de identidad ya existe"); // model state personaliazado
                 return BadRequest(ModelState);
             }
+            Empleado empleado = _mapper.Map<Empleado>(empleadoDto);
             _db.Update(empleado);
             await _db.SaveChangesAsync();
             return Ok(empleado);
