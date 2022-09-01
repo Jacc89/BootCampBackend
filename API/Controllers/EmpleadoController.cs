@@ -1,3 +1,4 @@
+using AutoMapper;
 using Core.Dto;
 using Core.Models;
 using Infraestructura.Data;
@@ -14,9 +15,11 @@ namespace API.Controllers
         private readonly ApplicationDbContext _db;
         private ResponseDto _response;
         private readonly ILogger<EmpleadoController> _logger;
+        private readonly IMapper _mapper;
        
-         public EmpleadoController(ApplicationDbContext db, ILogger<EmpleadoController> logger)
+         public EmpleadoController(ApplicationDbContext db, ILogger<EmpleadoController> logger, IMapper mapper)
          {
+            _mapper = mapper;
             _logger = logger;
             _db = db;
             _response = new ResponseDto();
@@ -57,9 +60,9 @@ namespace API.Controllers
             return Ok(_response);
         }
         [HttpPost]
-        public async Task<ActionResult<IEnumerable<Empleado>>> PostEmpleado([FromBody] Empleado empleado)
+        public async Task<ActionResult<IEnumerable<Empleado>>> PostEmpleado([FromBody] EmpleadoDto empleadoDto)
         {
-            if (empleado == null)
+            if (empleadoDto == null)
             {
                 _response.Mensaje =" Informacion Incorrecta del empleado";
                 _response.IsExitoso = false;
@@ -71,12 +74,14 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
             var empleExiste = await _db.TbEmpleado.FirstOrDefaultAsync
-                                                ( e => e.Id == empleado.Id);
+                                                ( e => e.Id == empleadoDto.Id);
             if (empleExiste != null)
             {
                 ModelState.AddModelError("cedulaDuplicado", "Numero de identidad ya existe"); // model state personaliazado
                 return BadRequest(ModelState);
             }
+
+            Empleado empleado = _mapper.Map<Empleado>(empleadoDto);
             await _db.TbEmpleado.AddAsync(empleado);
             await _db.SaveChangesAsync();
             return CreatedAtRoute("GetEmpleado", new {id= empleado.Id}, empleado); //status 201

@@ -1,3 +1,4 @@
+using AutoMapper;
 using Core.Dto;
 using Core.Models;
 using Infraestructura.Data;
@@ -13,8 +14,10 @@ namespace API.Controllers
         private readonly ApplicationDbContext _db;
         private ResponseDto _response;
         private readonly ILogger<RemisionController> _logger;
-        public RemisionController(ApplicationDbContext db, ILogger<RemisionController> logger)
+        private readonly IMapper _mapper;
+        public RemisionController(ApplicationDbContext db, ILogger<RemisionController> logger, IMapper mapper)
         {
+            _mapper = mapper;
             _logger = logger;
             _db = db;
             _response = new ResponseDto();
@@ -57,9 +60,9 @@ namespace API.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IEnumerable<Remision>>> PostRemision([FromBody] Remision remision)
+        public async Task<ActionResult<IEnumerable<Remision>>> PostRemision([FromBody] RemisionDto remisionDto)
         {
-            if (remision == null)
+            if (remisionDto == null)
             {
                 _response.Mensaje =" Informacion Incorrecta del remision";
                 _response.IsExitoso = false;
@@ -72,12 +75,13 @@ namespace API.Controllers
             }
 
             var remiExiste = await _db.TbRemision.FirstOrDefaultAsync
-                                                ( r => r.NumRemision == remision.NumRemision);
+                                                ( r => r.NumRemision == remisionDto.NumRemision);
             if (remiExiste != null)
             {
                 ModelState.AddModelError("RemisionDuplicado", "Numero de remision ya existe"); // model state personaliazado
                 return BadRequest(ModelState);
             }
+            Remision remision = _mapper.Map<Remision>(remisionDto);
             await _db.TbRemision.AddAsync(remision);
             await _db.SaveChangesAsync();
             return CreatedAtRoute("GetRemision", new {id= remision.Id}, remision); //status 201

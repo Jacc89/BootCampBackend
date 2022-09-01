@@ -1,4 +1,5 @@
 using System.Net;
+using AutoMapper;
 using Core.Dto;
 using Core.Models;
 using Infraestructura.Data;
@@ -14,9 +15,11 @@ namespace API.Controllers
         private readonly ApplicationDbContext _db;
         private ResponseDto _response;
         private readonly ILogger<ClienteController> _logger;
+        private readonly IMapper _mapper;
       
-        public ClienteController(ApplicationDbContext db, ILogger<ClienteController> logger)
+        public ClienteController(ApplicationDbContext db, ILogger<ClienteController> logger, IMapper mapper)
         {
+            _mapper = mapper;
             _logger = logger;
             _db = db; 
             _response = new ResponseDto();        
@@ -64,9 +67,9 @@ namespace API.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IEnumerable<Cliente>>> PostCliente([FromBody] Cliente cliente)
+        public async Task<ActionResult<IEnumerable<Cliente>>> PostCliente([FromBody] ClienteDto clienteDto)
         {
-            if (cliente == null)
+            if (clienteDto == null)
             {
                 _response.Mensaje =" Informacion Incorrecta del Cliente";
                 _response.IsExitoso = false;
@@ -78,12 +81,15 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
             var ClieExiste = await _db.TbCliente.FirstOrDefaultAsync
-                                                ( c => c.Nombre.ToLower() == cliente.Nombre.ToLower());
+                                                ( c => c.Nombre.ToLower() == clienteDto.Nombre.ToLower());
             if (ClieExiste != null)
             {
                 ModelState.AddModelError("NombreDuplicado", "Nombre del cliente ya existe"); // model state personaliazado
                 return BadRequest(ModelState);
             }
+
+            Cliente cliente = _mapper.Map<Cliente>(clienteDto);
+
             await _db.TbCliente.AddAsync(cliente);
             await _db.SaveChangesAsync();
             return CreatedAtRoute("GetCliente", new {id= cliente.Id}, cliente); //status 201

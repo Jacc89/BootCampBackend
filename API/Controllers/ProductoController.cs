@@ -1,3 +1,4 @@
+using AutoMapper;
 using Core.Dto;
 using Core.Models;
 using Infraestructura.Data;
@@ -13,8 +14,10 @@ namespace API.Controllers
         private readonly ApplicationDbContext _db;
         private ResponseDto _response;
         private readonly ILogger<ProductoController> _logger;
-        public ProductoController(ApplicationDbContext db, ILogger<ProductoController> logger)
+        private readonly IMapper _mapper;
+        public ProductoController(ApplicationDbContext db, ILogger<ProductoController> logger, IMapper mapper)
         {
+            _mapper = mapper;
             _logger = logger;
             _db = db;
             _response = new ResponseDto(); 
@@ -55,9 +58,9 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<IEnumerable<Producto>>> PostProducto([FromBody] Producto producto)
+        public async Task<ActionResult<IEnumerable<Producto>>> PostProducto([FromBody] ProductoDto productoDto)
         {
-            if (producto == null)
+            if (productoDto == null)
             {
                 _response.Mensaje =" Informacion Incorrecta del producto";
                 _response.IsExitoso = false;
@@ -70,12 +73,13 @@ namespace API.Controllers
             }
 
             var ProdExiste = await _db.TbProducto.FirstOrDefaultAsync
-                                                ( p => p.Nombre.ToLower() == producto.Nombre.ToLower());
+                                                ( p => p.Nombre.ToLower() == productoDto.Nombre.ToLower());
             if (ProdExiste != null)
             {
                 ModelState.AddModelError("NombreDuplicado", "Nombre de producto ya existe"); // model state personaliazado
                 return BadRequest(ModelState);
             }
+            Producto producto = _mapper.Map<Producto>(productoDto);
 
             await _db.TbProducto.AddAsync(producto);
             await _db.SaveChangesAsync();
@@ -84,9 +88,9 @@ namespace API.Controllers
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IEnumerable<Producto>>> PutProducto(int id, [FromBody] Producto producto)
+        public async Task<ActionResult<IEnumerable<Producto>>> PutProducto(int id, [FromBody] ProductoDto productoDto)
         {
-            if(id != producto.Id){
+            if(id != productoDto.Id){
                 return BadRequest("Id de Producto no  coincide");
             }
             if (!ModelState.IsValid)
@@ -95,13 +99,14 @@ namespace API.Controllers
             }
 
             var ProdExiste = await _db.TbProducto.FirstOrDefaultAsync
-                                                ( p => p.Nombre.ToLower() == producto.Nombre.ToLower()
-                                                && p.Id!= producto.Id);
+                                                ( p => p.Nombre.ToLower() == productoDto.Nombre.ToLower()
+                                                && p.Id!= productoDto.Id);
             if (ProdExiste != null)
             {
                 ModelState.AddModelError("NombreDuplicado", "Nombre de producto ya existe"); // model state personaliazado
                 return BadRequest(ModelState);
             }
+            Producto producto = _mapper.Map<Producto>(productoDto);
             _db.Update(producto);
             await _db.SaveChangesAsync();
             return Ok(producto);
