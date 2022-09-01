@@ -41,7 +41,7 @@ namespace API.Controllers
             {
                 _response.Mensaje ="Remision no existe!";
                 _response.IsExitoso = false;
-                return BadRequest(_response);   
+                return NotFound(_response);   
                 
             }
             _response.Resultado =  Remi;

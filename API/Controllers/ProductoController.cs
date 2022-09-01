@@ -41,7 +41,7 @@ namespace API.Controllers
             {
                 _response.Mensaje ="Producto no existe!";
                 _response.IsExitoso = false;
-                return BadRequest(_response);   
+                return NotFound(_response);   
                 
             }
              _response.Resultado =  Prod;

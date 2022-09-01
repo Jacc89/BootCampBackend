@@ -44,7 +44,7 @@ namespace API.Controllers
             {
                 _response.Mensaje ="Empleado no existe!";
                 _response.IsExitoso = false;
-                return BadRequest(_response);   
+                return NotFound(_response);   
                 
             }
             _response.Resultado =  Empl;

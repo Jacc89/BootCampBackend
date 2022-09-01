@@ -45,7 +45,7 @@ namespace API.Controllers
             {
                 _response.Mensaje ="Cliente no existe!";
                 _response.IsExitoso = false;
-                return BadRequest(_response);   
+                return NotFound(_response);   
                 
             }
 
