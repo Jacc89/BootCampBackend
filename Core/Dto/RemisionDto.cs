@@ -1,12 +1,11 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Core.Models;
 
-namespace Core.Models
+namespace Core.Dto
 {
-
-    public class Remision
+    public class RemisionDto
     {
-        [Key]
         public int Id { get; set; }
 
         [Required(ErrorMessage ="El numero de remision es requerida")]
@@ -46,7 +45,6 @@ namespace Core.Models
 
         [Required(ErrorMessage ="Observaciones requeridas")]
         [MaxLength(500, ErrorMessage ="No sea mayor a 500")]
-        public string Observaciones { get; set; }    
-     
+        public string Observaciones { get; set; }  
     }
 }

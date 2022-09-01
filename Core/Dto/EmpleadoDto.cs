@@ -1,10 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Core.Models
+namespace Core.Dto
 {
-    public class Empleado
+    public class EmpleadoDto
     {
-        [Key]
         public int Id { get; set; }
 
         [Required(ErrorMessage ="El nombres es requerida")]
@@ -34,8 +33,6 @@ namespace Core.Models
         [Required(ErrorMessage ="El cargo es requerida")]
         [MaxLength(50, ErrorMessage ="No sea mayor a 50")]
         public string Cargo { get; set; }
-
-
-
+        
     }
 }

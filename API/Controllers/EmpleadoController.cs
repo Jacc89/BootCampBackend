@@ -13,9 +13,11 @@ namespace API.Controllers
         
         private readonly ApplicationDbContext _db;
         private ResponseDto _response;
+        private readonly ILogger<EmpleadoController> _logger;
        
-         public EmpleadoController(ApplicationDbContext db)
+         public EmpleadoController(ApplicationDbContext db, ILogger<EmpleadoController> logger)
          {
+            _logger = logger;
             _db = db;
             _response = new ResponseDto();
                        
@@ -24,6 +26,7 @@ namespace API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Empleado>>> GetEmpleados()
         {
+             _logger.LogInformation("Listado de Empleados");
             var listas = await _db.TbEmpleado.ToListAsync();
             _response.Resultado =  listas;
             _response.Mensaje = "Lista de empleados";
@@ -34,6 +37,7 @@ namespace API.Controllers
         {
             if (id ==  0)
             {
+                 _logger.LogError("Debe de Enviar el ID del empleado");
                 _response.Mensaje ="Debe de enviar el Id del Empleado";
                 _response.IsExitoso = false;
                 return BadRequest(_response);                
@@ -42,6 +46,7 @@ namespace API.Controllers
 
              if (Empl == null)
             {
+                _logger.LogError("Empleado No Existe!");
                 _response.Mensaje ="Empleado no existe!";
                 _response.IsExitoso = false;
                 return NotFound(_response);   
@@ -54,16 +59,48 @@ namespace API.Controllers
         [HttpPost]
         public async Task<ActionResult<IEnumerable<Empleado>>> PostEmpleado([FromBody] Empleado empleado)
         {
+            if (empleado == null)
+            {
+                _response.Mensaje =" Informacion Incorrecta del empleado";
+                _response.IsExitoso = false;
+                return BadRequest(_response);   
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var empleExiste = await _db.TbEmpleado.FirstOrDefaultAsync
+                                                ( e => e.Id == empleado.Id);
+            if (empleExiste != null)
+            {
+                ModelState.AddModelError("cedulaDuplicado", "Numero de identidad ya existe"); // model state personaliazado
+                return BadRequest(ModelState);
+            }
             await _db.TbEmpleado.AddAsync(empleado);
             await _db.SaveChangesAsync();
             return CreatedAtRoute("GetEmpleado", new {id= empleado.Id}, empleado); //status 201
         }
 
         [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IEnumerable<Empleado>>> PutEmpleado(int id, [FromBody] Empleado empleado)
         {
             if(id != empleado.Id){
                 return BadRequest("Id de empleado no  coincide");
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var empleExiste = await _db.TbEmpleado.FirstOrDefaultAsync
+                                                ( e =>e.Nombres.ToLower() == empleado.Nombres.ToLower() 
+                                                && e.Id == empleado.Id);
+            if (empleExiste != null)
+            {
+                ModelState.AddModelError("cedulaDuplicado", "Numero de identidad ya existe"); // model state personaliazado
+                return BadRequest(ModelState);
             }
             _db.Update(empleado);
             await _db.SaveChangesAsync();
@@ -71,6 +108,9 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> DeleteEmpleado(int id)
         {
             var empleado = await _db.TbEmpleado.FindAsync(id);

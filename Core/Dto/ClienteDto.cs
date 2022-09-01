@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Core.Models
+namespace Core.Dto
 {
-    public class Cliente
+    public class ClienteDto
     {
-        [Key]
+
         public int Id { get; set; }
 
         [Required(ErrorMessage ="El nombre es requerida")]
@@ -18,6 +18,6 @@ namespace Core.Models
         [Required(ErrorMessage ="El Telefono es requerida")]
         [MaxLength(40, ErrorMessage ="No sea mayor a 40")]
         public string Telefono { get; set; }
-                
+        
     }
 }

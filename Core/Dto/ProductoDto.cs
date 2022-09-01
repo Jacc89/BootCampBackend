@@ -1,11 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Core.Models
+namespace Core.Dto
 {
-    public class Producto
+    public class ProductoDto
     {
-        [Key]
-        public int Id { get; set; }  
+         public int Id { get; set; }  
         [Required(ErrorMessage ="El nombre es requerida")]
         [MaxLength(100, ErrorMessage ="No sea mayor a 100")  ]    
         public string Nombre { get; set; }
