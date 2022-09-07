@@ -63,3 +63,5 @@ C:\Users\JACC\Documents\Proyecto Programacion\`Bootcamp\Scp\backend\API\bin\Debu
 C:\Users\JACC\Documents\Proyecto Programacion\`Bootcamp\Scp\backend\API\bin\Debug\net6.0\Infraestructura.dll
 C:\Users\JACC\Documents\Proyecto Programacion\`Bootcamp\Scp\backend\API\bin\Debug\net6.0\Infraestructura.pdb
 C:\Users\JACC\Documents\Proyecto Programacion\`Bootcamp\Scp\backend\API\bin\Debug\net6.0\Core.pdb
+C:\Users\JACC\Documents\Proyecto Programacion\`Bootcamp\Scp\backend\API\bin\Debug\net6.0\AutoMapper.dll
+C:\Users\JACC\Documents\Proyecto Programacion\`Bootcamp\Scp\backend\API\bin\Debug\net6.0\AutoMapper.Extensions.Microsoft.DependencyInjection.dll

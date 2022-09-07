@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "c+6JsNLzl6YAWJU58YF2ph+WIsIS3Dh6x3D2QLsdylk+qmrC5mX3shUq/a0ANJToua2VGz6+RKqA3kLPKlERYA==",
+  "dgSpecHash": "sD4LTMgxsHNv7PVSZ4sptqxJIDaBpbYRSxxiThb/Nn7BLJMopsO3OpusCEeVodK0ju7dy5wLrSoJJsE/sxvMpw==",
   "success": true,
-  "projectFilePath": "c:\\Users\\JACC\\Documents\\Proyecto Programacion\\`Bootcamp\\Scp\\backend\\API\\API.csproj",
+  "projectFilePath": "C:\\Users\\JACC\\Documents\\Proyecto Programacion\\`Bootcamp\\Scp\\backend\\API\\API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\JACC\\.nuget\\packages\\automapper\\11.0.1\\automapper.11.0.1.nupkg.sha512",
     "C:\\Users\\JACC\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\11.0.0\\automapper.extensions.microsoft.dependencyinjection.11.0.0.nupkg.sha512",
