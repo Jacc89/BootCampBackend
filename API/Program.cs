@@ -1,6 +1,8 @@
 using System.Data;
 using API.Helpers;
 using Infraestructura.Data;
+using Infraestructura.Data.Repositorio;
+using Infraestructura.Data.Repositorio.IRepositorio;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +18,7 @@ var connectionsString =  builder.Configuration.GetConnectionString("DefaultConne
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
                                 options.UseSqlServer(connectionsString));
 builder.Services.AddAutoMapper(typeof(MappingProfile)); // servicio de helps
+builder.Services.AddScoped<IUnidadTrabajo, UnidadTrabajo>(); //unidad de trabajo
 builder.Services.AddCors();
 var app = builder.Build();
 

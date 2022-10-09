@@ -1,7 +1,10 @@
+using Core.Models;
+
 namespace Infraestructura.Data.Repositorio.IRepositorio
 {
-    public class IClienteRepositorio
+    public interface IClienteRepositorio : IRepositorio<Cliente>
     {
+        void Actualizar(Cliente cliente);
         
     }
 }
