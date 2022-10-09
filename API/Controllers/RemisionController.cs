@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using AutoMapper;
 using Core.Dto;
 using Core.Models;
@@ -24,11 +25,11 @@ namespace API.Controllers
 
         }
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Remision>>> GetRemisiones()
+        public async Task<ActionResult<IEnumerable<RemisionDto>>> GetRemisiones()
         {
              _logger.LogInformation("Listado de Remisiones");
-            var listas = await _db.TbRemision.ToListAsync();
-            _response.Resultado =  listas;
+            var listas = await _db.TbRemision.Include(c=>c.Empleado).Include(c=>c.Cliente).Include(c=>c.Producto).ToListAsync();
+            _response.Resultado = _mapper.Map<IEnumerable<Remision>, IEnumerable<RemisionDto>>(listas);
             _response.Mensaje = "Lista de remisiones";
             return Ok(_response);
            
@@ -43,7 +44,7 @@ namespace API.Controllers
                 _response.IsExitoso = false;
                 return BadRequest(_response);                
             }
-            var Remi = await _db.TbRemision.FindAsync(id);
+            var Remi = await _db.TbRemision.Include(c=>c.Empleado).Include(c=>c.Cliente).Include(c=>c.Producto).FirstOrDefaultAsync(e => e.Id == id);
             if (Remi == null)
             {
                 _logger.LogError("Remision No Existe!");
@@ -52,9 +53,22 @@ namespace API.Controllers
                 return NotFound(_response);   
                 
             }
-            _response.Resultado =  Remi;
+            _response.Resultado =  _mapper.Map<Remision, RemisionDto>(Remi);
             _response.Mensaje = "Datos de remisiones";
             return Ok(_response); // status 200
+        }
+
+        [HttpGet]
+        [Route("RemisionPorEmpleado/{EncargadoId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<RemisionDto>>> GetRemisionPorEmpleado(int EncargadoId)
+        {
+            _logger.LogInformation("Listado de remisiones por encargado");
+            var lista = await _db.TbRemision.Include(c=>c.Empleado).Where(e=>e.EncargadoId == EncargadoId).ToListAsync();
+            _response.Resultado = _mapper.Map<IEnumerable<Remision>, IEnumerable<RemisionDto>>(lista);
+            _response.IsExitoso = true;
+            _response.Mensaje = (" Listado de remisiones por encargado");
+            return Ok(_response);
         }
 
         [HttpPost]
