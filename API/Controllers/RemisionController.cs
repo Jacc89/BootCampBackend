@@ -3,6 +3,7 @@ using AutoMapper;
 using Core.Dto;
 using Core.Models;
 using Infraestructura.Data;
+using Infraestructura.Data.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,15 +13,15 @@ namespace API.Controllers
     [ApiController]
     public class RemisionController : ControllerBase
     {
-        private readonly ApplicationDbContext _db;
         private ResponseDto _response;
         private readonly ILogger<RemisionController> _logger;
         private readonly IMapper _mapper;
-        public RemisionController(ApplicationDbContext db, ILogger<RemisionController> logger, IMapper mapper)
+        private readonly IUnidadTrabajo _unidadTrabajo;
+        public RemisionController(IUnidadTrabajo unidadTrabajo, ILogger<RemisionController> logger, IMapper mapper)
         {
+            _unidadTrabajo = unidadTrabajo;
             _mapper = mapper;
             _logger = logger;
-            _db = db;
             _response = new ResponseDto();
 
         }
@@ -28,7 +29,8 @@ namespace API.Controllers
         public async Task<ActionResult<IEnumerable<RemisionDto>>> GetRemisiones()
         {
              _logger.LogInformation("Listado de Remisiones");
-            var listas = await _db.TbRemision.Include(c=>c.Empleado).Include(c=>c.Cliente).Include(c=>c.Producto).ToListAsync();
+            var listas = await _unidadTrabajo.Remision.ObtenerTodos(incluirPropiedades:"Empleado, Cliente, Producto");
+            // _db.TbRemision.Include(c=>c.Empleado).Include(c=>c.Cliente).Include(c=>c.Producto).ToListAsync();
             _response.Resultado = _mapper.Map<IEnumerable<Remision>, IEnumerable<RemisionDto>>(listas);
             _response.Mensaje = "Lista de remisiones";
             return Ok(_response);
@@ -44,7 +46,8 @@ namespace API.Controllers
                 _response.IsExitoso = false;
                 return BadRequest(_response);                
             }
-            var Remi = await _db.TbRemision.Include(c=>c.Empleado).Include(c=>c.Cliente).Include(c=>c.Producto).FirstOrDefaultAsync(e => e.Id == id);
+            var Remi = await _unidadTrabajo.Remision.ObtenerPrimero(c=>c.Id==id,incluirPropiedades:"Empleado,Cliente,Producto");
+            // _db.TbRemision.Include(c=>c.Empleado).Include(c=>c.Cliente).Include(c=>c.Producto).FirstOrDefaultAsync(e => e.Id == id);
             if (Remi == null)
             {
                 _logger.LogError("Remision No Existe!");
@@ -64,7 +67,7 @@ namespace API.Controllers
         public async Task<ActionResult<IEnumerable<RemisionDto>>> GetRemisionPorEmpleado(int EncargadoId)
         {
             _logger.LogInformation("Listado de remisiones por encargado");
-            var lista = await _db.TbRemision.Include(c=>c.Empleado).Where(e=>e.EncargadoId == EncargadoId).ToListAsync();
+            var lista = await _unidadTrabajo.Remision.ObtenerTodos(e=>e.EncargadoId == EncargadoId, incluirPropiedades:"Enc");
             _response.Resultado = _mapper.Map<IEnumerable<Remision>, IEnumerable<RemisionDto>>(lista);
             _response.IsExitoso = true;
             _response.Mensaje = (" Listado de remisiones por encargado");
@@ -88,7 +91,7 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var remiExiste = await _db.TbRemision.FirstOrDefaultAsync
+            var remiExiste = await  _unidadTrabajo.Remision.ObtenerPrimero
                                                 ( r => r.NumRemision == remisionDto.NumRemision);
             if (remiExiste != null)
             {
@@ -96,8 +99,8 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
             Remision remision = _mapper.Map<Remision>(remisionDto);
-            await _db.TbRemision.AddAsync(remision);
-            await _db.SaveChangesAsync();
+            await _unidadTrabajo.Remision.Agregar(remision);
+            await _unidadTrabajo.Guardar();
             return CreatedAtRoute("GetRemision", new {id= remision.Id}, remision); //status 201
 
         }
@@ -115,7 +118,7 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var remiExiste = await _db.TbRemision.FirstOrDefaultAsync
+            var remiExiste = await _unidadTrabajo.Remision.ObtenerPrimero
                                                 ( r => r.NumRemision == remisionDto.NumRemision && r.Id!= remisionDto.Id);
             if (remiExiste != null)
             {
@@ -123,8 +126,8 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
             Remision remision = _mapper.Map<Remision>(remisionDto);
-            _db.Update(remision);
-            await _db.SaveChangesAsync();
+            _unidadTrabajo.Remision.Actualizar(remision);
+            await _unidadTrabajo.Guardar();
             return Ok(remision);
         }
         [HttpDelete("{id}")]
@@ -133,12 +136,12 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> DeleteRemision(int id)
         {
-            var remision = await _db.TbRemision.FindAsync(id);
+            var remision = await _unidadTrabajo.Remision.ObtenerPrimero(c=>c.Id==id);
             if(remision == null){
                 return NotFound();
             }
-            _db.TbRemision.Remove(remision);
-            await _db.SaveChangesAsync();
+            _unidadTrabajo.Remision.Remover(remision);
+            await _unidadTrabajo.Guardar();
             return NoContent();
         }
 

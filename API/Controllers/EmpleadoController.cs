@@ -2,6 +2,7 @@ using AutoMapper;
 using Core.Dto;
 using Core.Models;
 using Infraestructura.Data;
+using Infraestructura.Data.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,17 +12,18 @@ namespace API.Controllers
     [ApiController]
     public class EmpleadoController : ControllerBase
     {
-        
-        private readonly ApplicationDbContext _db;
         private ResponseDto _response;
         private readonly ILogger<EmpleadoController> _logger;
         private readonly IMapper _mapper;
+        
+        private readonly IUnidadTrabajo _unidadTrabajo;
        
-         public EmpleadoController(ApplicationDbContext db, ILogger<EmpleadoController> logger, IMapper mapper)
+         public EmpleadoController(IUnidadTrabajo unidadTrabajo, ILogger<EmpleadoController> logger, IMapper mapper)
          {
+            _unidadTrabajo = unidadTrabajo;
+            
             _mapper = mapper;
             _logger = logger;
-            _db = db;
             _response = new ResponseDto();
                        
 
@@ -30,7 +32,7 @@ namespace API.Controllers
         public async Task<ActionResult<IEnumerable<Empleado>>> GetEmpleados()
         {
              _logger.LogInformation("Listado de Empleados");
-            var listas = await _db.TbEmpleado.ToListAsync();
+            var listas = await _unidadTrabajo.Cliente.ObtenerTodos();
             _response.Resultado =  listas;
             _response.Mensaje = "Lista de empleados";
             return Ok(_response);
@@ -45,7 +47,7 @@ namespace API.Controllers
                 _response.IsExitoso = false;
                 return BadRequest(_response);                
             }
-            var Empl = await _db.TbEmpleado.FindAsync(id);
+            var Empl = await _unidadTrabajo.Empleado.ObtenerPrimero(c=>c.Id==id);
 
              if (Empl == null)
             {
@@ -73,7 +75,7 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var empleExiste = await _db.TbEmpleado.FirstOrDefaultAsync
+            var empleExiste = await _unidadTrabajo.Empleado.ObtenerPrimero
                                                 ( e => e.Id == empleadoDto.Id);
             if (empleExiste != null)
             {
@@ -82,8 +84,8 @@ namespace API.Controllers
             }
 
             Empleado empleado = _mapper.Map<Empleado>(empleadoDto);
-            await _db.TbEmpleado.AddAsync(empleado);
-            await _db.SaveChangesAsync();
+            await _unidadTrabajo.Empleado.Agregar(empleado);
+            await _unidadTrabajo.Guardar();
             return CreatedAtRoute("GetEmpleado", new {id= empleado.Id}, empleado); //status 201
         }
 
@@ -99,7 +101,7 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var empleExiste = await _db.TbEmpleado.FirstOrDefaultAsync
+            var empleExiste = await _unidadTrabajo.Empleado.ObtenerPrimero
                                                 ( e =>e.Nombres.ToLower() == empleadoDto.Nombres.ToLower() 
                                                 && e.Id == empleadoDto.Id);
             if (empleExiste != null)
@@ -108,8 +110,8 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
             Empleado empleado = _mapper.Map<Empleado>(empleadoDto);
-            _db.Update(empleado);
-            await _db.SaveChangesAsync();
+            _unidadTrabajo.Empleado.Actualizar(empleado);
+            await _unidadTrabajo.Guardar();
             return Ok(empleado);
         }
 
@@ -119,12 +121,12 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> DeleteEmpleado(int id)
         {
-            var empleado = await _db.TbEmpleado.FindAsync(id);
+            var empleado = await _unidadTrabajo.Empleado.ObtenerPrimero(c=>c.Id==id);
             if(empleado == null){
                 return NotFound();
             }
-            _db.TbEmpleado.Remove(empleado);
-            await _db.SaveChangesAsync();
+            _unidadTrabajo.Empleado.Remover(empleado);
+            await _unidadTrabajo.Guardar();
             return NoContent();
         }
 

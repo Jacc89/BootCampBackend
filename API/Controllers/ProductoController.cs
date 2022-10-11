@@ -2,6 +2,7 @@ using AutoMapper;
 using Core.Dto;
 using Core.Models;
 using Infraestructura.Data;
+using Infraestructura.Data.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,15 +12,15 @@ namespace API.Controllers
     [ApiController]
     public class ProductoController : ControllerBase
     {
-        private readonly ApplicationDbContext _db;
         private ResponseDto _response;
         private readonly ILogger<ProductoController> _logger;
         private readonly IMapper _mapper;
-        public ProductoController(ApplicationDbContext db, ILogger<ProductoController> logger, IMapper mapper)
+        private readonly IUnidadTrabajo _unidadTrabajo;
+        public ProductoController(IUnidadTrabajo unidadTrabajo, ILogger<ProductoController> logger, IMapper mapper)
         {
+            _unidadTrabajo = unidadTrabajo;           
             _mapper = mapper;
             _logger = logger;
-            _db = db;
             _response = new ResponseDto(); 
 
         }
@@ -27,7 +28,7 @@ namespace API.Controllers
         public async Task<ActionResult<IEnumerable<Producto>>> GetProductos()
         {
              _logger.LogInformation("Listado de Productos");
-            var listas = await _db.TbProducto.ToListAsync();
+            var listas = await _unidadTrabajo.Producto.ObtenerTodos();
             _response.Resultado =  listas;
             _response.Mensaje = "Lista de productos";
             return Ok(_response);
@@ -43,7 +44,7 @@ namespace API.Controllers
                 return BadRequest(_response);                
             }
 
-            var Prod = await _db.TbProducto.FindAsync(id);
+            var Prod = await _unidadTrabajo.Producto.ObtenerPrimero(c=>c.Id==id);
             if (Prod == null)
             {
                 _logger.LogError("Producto No Existe!");
@@ -72,7 +73,7 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var ProdExiste = await _db.TbProducto.FirstOrDefaultAsync
+            var ProdExiste = await _unidadTrabajo.Producto.ObtenerPrimero
                                                 ( p => p.Nombre.ToLower() == productoDto.Nombre.ToLower());
             if (ProdExiste != null)
             {
@@ -81,8 +82,8 @@ namespace API.Controllers
             }
             Producto producto = _mapper.Map<Producto>(productoDto);
 
-            await _db.TbProducto.AddAsync(producto);
-            await _db.SaveChangesAsync();
+            await _unidadTrabajo.Producto.Agregar(producto);
+            await _unidadTrabajo.Guardar();
             return CreatedAtRoute("GetProducto", new {id= producto.Id}, producto); //status 201
         }
         [HttpPut("{id}")]
@@ -98,7 +99,7 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var ProdExiste = await _db.TbProducto.FirstOrDefaultAsync
+            var ProdExiste = await _unidadTrabajo.Cliente.ObtenerPrimero
                                                 ( p => p.Nombre.ToLower() == productoDto.Nombre.ToLower()
                                                 && p.Id!= productoDto.Id);
             if (ProdExiste != null)
@@ -107,8 +108,8 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
             Producto producto = _mapper.Map<Producto>(productoDto);
-            _db.Update(producto);
-            await _db.SaveChangesAsync();
+            _unidadTrabajo.Producto.Actualizar(producto);
+            await _unidadTrabajo.Guardar();
             return Ok(producto);
         }
         [HttpDelete("{id}")]
@@ -117,12 +118,12 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> DeleteProducto(int id)
         {
-            var producto = await _db.TbProducto.FindAsync(id);
+            var producto = await _unidadTrabajo.Producto.ObtenerPrimero(c=>c.Id==id);
             if(producto == null){
                 return NotFound();
             }
-            _db.TbProducto.Remove(producto);
-            await _db.SaveChangesAsync();
+            _unidadTrabajo.Producto.Remover(producto);
+            await _unidadTrabajo.Guardar();
             return NoContent();
         }
 

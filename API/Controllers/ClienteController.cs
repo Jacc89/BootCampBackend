@@ -1,8 +1,8 @@
-using System.Net;
 using AutoMapper;
 using Core.Dto;
 using Core.Models;
 using Infraestructura.Data;
+using Infraestructura.Data.Repositorio.IRepositorio;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,16 +12,17 @@ namespace API.Controllers
     [ApiController]
     public class ClienteController : ControllerBase
     {
-        private readonly ApplicationDbContext _db;
+       
         private ResponseDto _response;
         private readonly ILogger<ClienteController> _logger;
         private readonly IMapper _mapper;
+        private readonly IUnidadTrabajo _unidadTrabajo;
       
-        public ClienteController(ApplicationDbContext db, ILogger<ClienteController> logger, IMapper mapper)
+        public ClienteController(IUnidadTrabajo unidadTrabajo, ILogger<ClienteController> logger, IMapper mapper)
         {
+            _unidadTrabajo = unidadTrabajo;
             _mapper = mapper;
             _logger = logger;
-            _db = db; 
             _response = new ResponseDto();        
 
         }
@@ -31,7 +32,7 @@ namespace API.Controllers
         {
 
              _logger.LogInformation("Listado de Clientes");
-            var listas = await _db.TbCliente.ToListAsync();
+            var listas = await _unidadTrabajo.Cliente.ObtenerTodos();
             _response.Resultado =  listas;
             _response.Mensaje = " lista de clientes";
             return Ok(_response);
@@ -50,7 +51,7 @@ namespace API.Controllers
                 return BadRequest(_response);                
             }
 
-            var Clie = await _db.TbCliente.FindAsync(id);
+            var Clie = await _unidadTrabajo.Cliente.ObtenerPrimero(c=>c.Id ==id);
             if (Clie == null)
             {
                 _logger.LogError("Cliente No Existe!");
@@ -80,7 +81,7 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var ClieExiste = await _db.TbCliente.FirstOrDefaultAsync
+            var ClieExiste = await _unidadTrabajo.Cliente.ObtenerPrimero
                                                 ( c => c.Nombre.ToLower() == clienteDto.Nombre.ToLower());
             if (ClieExiste != null)
             {
@@ -90,8 +91,8 @@ namespace API.Controllers
 
             Cliente cliente = _mapper.Map<Cliente>(clienteDto);
 
-            await _db.TbCliente.AddAsync(cliente);
-            await _db.SaveChangesAsync();
+            await _unidadTrabajo.Cliente.Agregar(cliente);
+            await _unidadTrabajo.Guardar();
             return CreatedAtRoute("GetCliente", new {id= cliente.Id}, cliente); //status 201
         }
         [HttpPut("{id}")]
@@ -106,7 +107,7 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var ClieExiste = await _db.TbCliente.FirstOrDefaultAsync
+            var ClieExiste = await _unidadTrabajo.Cliente.ObtenerPrimero
                                                 ( c => c.Nombre.ToLower() == clienteDto.Nombre.ToLower() && c.Id!= clienteDto.Id);
             if (ClieExiste != null)
             {
@@ -114,8 +115,8 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
             Cliente cliente = _mapper.Map<Cliente>(clienteDto);
-            _db.Update(cliente);
-            await _db.SaveChangesAsync();
+            _unidadTrabajo.Cliente.Actualizar(cliente);
+            await _unidadTrabajo.Guardar();
             return Ok(cliente);
         }
         [HttpDelete("{id}")]
@@ -124,12 +125,12 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> DeleteCliente(int id)
         {
-            var cliente = await _db.TbCliente.FindAsync(id);
+            var cliente = await _unidadTrabajo.Cliente.ObtenerPrimero(c=>c.Id==id);
             if(cliente == null){
                 return NotFound();
             }
-            _db.TbCliente.Remove(cliente);
-            await _db.SaveChangesAsync();
+            _unidadTrabajo.Cliente.Remover(cliente);
+            await _unidadTrabajo.Guardar();
             return NoContent();
         }
 
