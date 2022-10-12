@@ -1,3 +1,4 @@
+using System.Net;
 using AutoMapper;
 using Core.Dto;
 using Core.Models;
@@ -35,6 +36,7 @@ namespace API.Controllers
             var listas = await _unidadTrabajo.Cliente.ObtenerTodos();
             _response.Resultado =  listas;
             _response.Mensaje = "Lista de empleados";
+            _response.StatusCode = HttpStatusCode.OK;
             return Ok(_response);
         }
         [HttpGet("{id}", Name = "GetEmpleado")]
@@ -45,6 +47,7 @@ namespace API.Controllers
                  _logger.LogError("Debe de Enviar el ID del empleado");
                 _response.Mensaje ="Debe de enviar el Id del Empleado";
                 _response.IsExitoso = false;
+                _response.StatusCode = HttpStatusCode.BadRequest;
                 return BadRequest(_response);                
             }
             var Empl = await _unidadTrabajo.Empleado.ObtenerPrimero(c=>c.Id==id);
@@ -54,11 +57,14 @@ namespace API.Controllers
                 _logger.LogError("Empleado No Existe!");
                 _response.Mensaje ="Empleado no existe!";
                 _response.IsExitoso = false;
+                _response.StatusCode = HttpStatusCode.NotFound;
                 return NotFound(_response);   
                 
             }
             _response.Resultado =  Empl;
-            _response.Mensaje = "Datos de empleado";
+            _response.Mensaje = "Datos de empleado" + Empl.Id;
+            _response.IsExitoso = true;
+            _response.StatusCode = HttpStatusCode.OK;
             return Ok(_response);
         }
         [HttpPost]
@@ -68,6 +74,7 @@ namespace API.Controllers
             {
                 _response.Mensaje =" Informacion Incorrecta del empleado";
                 _response.IsExitoso = false;
+                _response.StatusCode = HttpStatusCode.BadRequest;
                 return BadRequest(_response);   
             }
 
@@ -79,13 +86,19 @@ namespace API.Controllers
                                                 ( e => e.Id == empleadoDto.Id);
             if (empleExiste != null)
             {
-                ModelState.AddModelError("cedulaDuplicado", "Numero de identidad ya existe"); // model state personaliazado
-                return BadRequest(ModelState);
+                // ModelState.AddModelError("cedulaDuplicado", "Numero de identidad ya existe"); // model state personaliazado
+                _response.IsExitoso = false;
+                _response.Mensaje = "Nombre del empleado ya existe";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
             }
 
             Empleado empleado = _mapper.Map<Empleado>(empleadoDto);
             await _unidadTrabajo.Empleado.Agregar(empleado);
             await _unidadTrabajo.Guardar();
+             _response.IsExitoso = false;
+            _response.Mensaje = "Empleado Guardado con exito";
+            _response.StatusCode = HttpStatusCode.Created;
             return CreatedAtRoute("GetEmpleado", new {id= empleado.Id}, empleado); //status 201
         }
 
@@ -95,7 +108,11 @@ namespace API.Controllers
         public async Task<ActionResult<IEnumerable<Empleado>>> PutEmpleado(int id, [FromBody] EmpleadoDto empleadoDto)
         {
             if(id != empleadoDto.Id){
-                return BadRequest("Id de empleado no  coincide");
+                _response.IsExitoso = false;
+                _response.Mensaje = "Id de empleado no  coincide";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
+               
             }
             if (!ModelState.IsValid)
             {
@@ -106,13 +123,19 @@ namespace API.Controllers
                                                 && e.Id == empleadoDto.Id);
             if (empleExiste != null)
             {
-                ModelState.AddModelError("cedulaDuplicado", "Numero de identidad ya existe"); // model state personaliazado
-                return BadRequest(ModelState);
+                // ModelState.AddModelError("cedulaDuplicado", "Numero de identidad ya existe"); // model state personaliazado
+                _response.IsExitoso = false;
+                _response.Mensaje = "Nombre del Empleado ya existe";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
             }
             Empleado empleado = _mapper.Map<Empleado>(empleadoDto);
             _unidadTrabajo.Empleado.Actualizar(empleado);
             await _unidadTrabajo.Guardar();
-            return Ok(empleado);
+            _response.IsExitoso = false;
+            _response.Mensaje = "Empleado Actualizado";
+            _response.StatusCode = HttpStatusCode.OK;
+            return Ok(_response);
         }
 
         [HttpDelete("{id}")]
@@ -123,11 +146,18 @@ namespace API.Controllers
         {
             var empleado = await _unidadTrabajo.Empleado.ObtenerPrimero(c=>c.Id==id);
             if(empleado == null){
-                return NotFound();
+                 _response.IsExitoso = false;
+                _response.Mensaje = "Empleado No existe";
+                _response.StatusCode = HttpStatusCode.NotFound;
+                return NotFound(_response);
             }
             _unidadTrabajo.Empleado.Remover(empleado);
             await _unidadTrabajo.Guardar();
-            return NoContent();
+            _response.IsExitoso = false;
+            _response.Mensaje = "Empleado Eliminado";
+            _response.StatusCode = HttpStatusCode.NoContent;
+            return Ok(_response);
+            
         }
 
     

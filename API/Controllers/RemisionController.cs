@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Net;
 using AutoMapper;
 using Core.Dto;
 using Core.Models;
@@ -29,7 +30,7 @@ namespace API.Controllers
         public async Task<ActionResult<IEnumerable<RemisionDto>>> GetRemisiones()
         {
              _logger.LogInformation("Listado de Remisiones");
-            var listas = await _unidadTrabajo.Remision.ObtenerTodos(incluirPropiedades:"Empleado, Cliente, Producto");
+            var listas = await _unidadTrabajo.Remision.ObtenerTodos(incluirPropiedades:"Empleado,Cliente,Producto");
             // _db.TbRemision.Include(c=>c.Empleado).Include(c=>c.Cliente).Include(c=>c.Producto).ToListAsync();
             _response.Resultado = _mapper.Map<IEnumerable<Remision>, IEnumerable<RemisionDto>>(listas);
             _response.Mensaje = "Lista de remisiones";
@@ -53,11 +54,14 @@ namespace API.Controllers
                 _logger.LogError("Remision No Existe!");
                 _response.Mensaje ="Remision no existe!";
                 _response.IsExitoso = false;
+                _response.StatusCode = HttpStatusCode.NotFound;
                 return NotFound(_response);   
                 
             }
             _response.Resultado =  _mapper.Map<Remision, RemisionDto>(Remi);
-            _response.Mensaje = "Datos de remisiones";
+            _response.Mensaje = "Datos de remisiones" + Remi.Id;
+            _response.IsExitoso = true;
+            _response.StatusCode = HttpStatusCode.OK;
             return Ok(_response); // status 200
         }
 
@@ -67,7 +71,7 @@ namespace API.Controllers
         public async Task<ActionResult<IEnumerable<RemisionDto>>> GetRemisionPorEmpleado(int EncargadoId)
         {
             _logger.LogInformation("Listado de remisiones por encargado");
-            var lista = await _unidadTrabajo.Remision.ObtenerTodos(e=>e.EncargadoId == EncargadoId, incluirPropiedades:"Enc");
+            var lista = await _unidadTrabajo.Remision.ObtenerTodos(e=>e.EncargadoId == EncargadoId, incluirPropiedades:"Empleado");
             _response.Resultado = _mapper.Map<IEnumerable<Remision>, IEnumerable<RemisionDto>>(lista);
             _response.IsExitoso = true;
             _response.Mensaje = (" Listado de remisiones por encargado");
@@ -83,6 +87,7 @@ namespace API.Controllers
             {
                 _response.Mensaje =" Informacion Incorrecta del remision";
                 _response.IsExitoso = false;
+                _response.StatusCode = HttpStatusCode.BadRequest;
                 return BadRequest(_response);   
             }
 
@@ -95,12 +100,18 @@ namespace API.Controllers
                                                 ( r => r.NumRemision == remisionDto.NumRemision);
             if (remiExiste != null)
             {
-                ModelState.AddModelError("RemisionDuplicado", "Numero de remision ya existe"); // model state personaliazado
-                return BadRequest(ModelState);
+                // ModelState.AddModelError("RemisionDuplicado", "Numero de remision ya existe"); // model state personaliazado
+                _response.IsExitoso = false;
+                _response.Mensaje = "Nª Remision ya existe";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
             }
             Remision remision = _mapper.Map<Remision>(remisionDto);
             await _unidadTrabajo.Remision.Agregar(remision);
             await _unidadTrabajo.Guardar();
+            _response.IsExitoso = false;
+            _response.Mensaje = "Remision Guardado con exito";
+            _response.StatusCode = HttpStatusCode.Created;
             return CreatedAtRoute("GetRemision", new {id= remision.Id}, remision); //status 201
 
         }
@@ -110,7 +121,10 @@ namespace API.Controllers
         public async Task<ActionResult<IEnumerable<Remision>>> PutRemision(int id, [FromBody] RemisionDto remisionDto)
         {
             if(id != remisionDto.Id){
-                return BadRequest("Id de Remision no  coincide");
+                _response.IsExitoso = false;
+                _response.Mensaje = "Id de Remision no  coincide";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
             }
 
             if (!ModelState.IsValid)
@@ -138,11 +152,17 @@ namespace API.Controllers
         {
             var remision = await _unidadTrabajo.Remision.ObtenerPrimero(c=>c.Id==id);
             if(remision == null){
-                return NotFound();
+                _response.IsExitoso = false;
+                _response.Mensaje = "Remision No existe";
+                _response.StatusCode = HttpStatusCode.NotFound;
+                return NotFound(_response);
             }
             _unidadTrabajo.Remision.Remover(remision);
             await _unidadTrabajo.Guardar();
-            return NoContent();
+            _response.IsExitoso = false;
+            _response.Mensaje = "Remision Eliminado";
+            _response.StatusCode = HttpStatusCode.NoContent;
+            return Ok(_response);
         }
 
 

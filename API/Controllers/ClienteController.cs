@@ -1,3 +1,4 @@
+using System.Net;
 using AutoMapper;
 using Core.Dto;
 using Core.Models;
@@ -35,6 +36,7 @@ namespace API.Controllers
             var listas = await _unidadTrabajo.Cliente.ObtenerTodos();
             _response.Resultado =  listas;
             _response.Mensaje = " lista de clientes";
+            _response.StatusCode = HttpStatusCode.OK;
             return Ok(_response);
         }
         [HttpGet("{id}", Name = "GetCliente")]
@@ -48,6 +50,7 @@ namespace API.Controllers
                  _logger.LogError("Debe de Enviar el ID de cliente");
                 _response.Mensaje ="Debe de enviar el Id del Cliente";
                 _response.IsExitoso = false;
+                _response.StatusCode = HttpStatusCode.BadRequest;
                 return BadRequest(_response);                
             }
 
@@ -57,12 +60,15 @@ namespace API.Controllers
                 _logger.LogError("Cliente No Existe!");
                 _response.Mensaje ="Cliente no existe!";
                 _response.IsExitoso = false;
+                _response.StatusCode = HttpStatusCode.NotFound;
                 return NotFound(_response);   
                 
             }
 
             _response.Resultado =  Clie;
             _response.Mensaje = " Datos de cliente" + Clie.Id;
+            _response.IsExitoso = true;
+            _response.StatusCode = HttpStatusCode.OK;
             return Ok(_response);
         }
         [HttpPost]
@@ -74,6 +80,7 @@ namespace API.Controllers
             {
                 _response.Mensaje =" Informacion Incorrecta del Cliente";
                 _response.IsExitoso = false;
+                _response.StatusCode = HttpStatusCode.BadRequest;
                 return BadRequest(_response);   
             }
 
@@ -85,14 +92,20 @@ namespace API.Controllers
                                                 ( c => c.Nombre.ToLower() == clienteDto.Nombre.ToLower());
             if (ClieExiste != null)
             {
-                ModelState.AddModelError("NombreDuplicado", "Nombre del cliente ya existe"); // model state personaliazado
-                return BadRequest(ModelState);
+                // ModelState.AddModelError("NombreDuplicado", "Nombre del cliente ya existe"); // model state personaliazado
+                _response.IsExitoso = false;
+                _response.Mensaje = "Nombre del cliente ya existe";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
             }
 
             Cliente cliente = _mapper.Map<Cliente>(clienteDto);
 
             await _unidadTrabajo.Cliente.Agregar(cliente);
             await _unidadTrabajo.Guardar();
+            _response.IsExitoso = false;
+            _response.Mensaje = "Cliente Guardado con exito";
+            _response.StatusCode = HttpStatusCode.Created;
             return CreatedAtRoute("GetCliente", new {id= cliente.Id}, cliente); //status 201
         }
         [HttpPut("{id}")]
@@ -101,7 +114,10 @@ namespace API.Controllers
         public async Task<ActionResult<IEnumerable<Cliente>>> PutCliente(int id, [FromBody] ClienteDto clienteDto)
         {
             if(id != clienteDto.Id){
-                return BadRequest("Id de Cliente no  coincide");
+                _response.IsExitoso = false;
+                _response.Mensaje = "Id de Cliente no  coincide";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
             }
             if (!ModelState.IsValid)
             {
@@ -111,13 +127,20 @@ namespace API.Controllers
                                                 ( c => c.Nombre.ToLower() == clienteDto.Nombre.ToLower() && c.Id!= clienteDto.Id);
             if (ClieExiste != null)
             {
-                ModelState.AddModelError("NombreDuplicado", "Nombre del cliente ya existe"); // model state personaliazado
-                return BadRequest(ModelState);
+                // ModelState.AddModelError("NombreDuplicado", "Nombre del cliente ya existe"); // model state personaliazado
+
+                _response.IsExitoso = false;
+                _response.Mensaje = "Nombre del cliente ya existe";
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
             }
             Cliente cliente = _mapper.Map<Cliente>(clienteDto);
             _unidadTrabajo.Cliente.Actualizar(cliente);
             await _unidadTrabajo.Guardar();
-            return Ok(cliente);
+            _response.IsExitoso = false;
+            _response.Mensaje = "Cliente Actualizado";
+            _response.StatusCode = HttpStatusCode.OK;
+            return Ok(_response);
         }
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -127,11 +150,17 @@ namespace API.Controllers
         {
             var cliente = await _unidadTrabajo.Cliente.ObtenerPrimero(c=>c.Id==id);
             if(cliente == null){
-                return NotFound();
+                _response.IsExitoso = false;
+                _response.Mensaje = "Cliente No existe";
+                _response.StatusCode = HttpStatusCode.NotFound;
+                return NotFound(_response);
             }
             _unidadTrabajo.Cliente.Remover(cliente);
             await _unidadTrabajo.Guardar();
-            return NoContent();
+            _response.IsExitoso = false;
+            _response.Mensaje = "Cliente Eliminado";
+            _response.StatusCode = HttpStatusCode.NoContent;
+            return Ok(_response);
         }
 
     }
